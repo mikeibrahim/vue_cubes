@@ -11,7 +11,7 @@ export default {
     lastBoxColor: { type: String, default: () => '#3B7EDA' },
     errorColor: { type: String, default: () => '#B71C1C' },
     lastBoxError: { type: Boolean, default: () => false },
-    canvasSize: { type: Object, default: () => ({ x: 500, y: 500 }) },
+    canvasSize: { type: Object, default: () => ({ x: 750, y: 750 }) },
     backgroundColor: { type: String, default: () => '#eeeeee' },
     groundColor: { type: String, default: () => '#333333' },
     objectScale: { type: Number, default: () => 1.4 },
@@ -47,6 +47,7 @@ export default {
           p5.pop()
 
           // Render boxes
+          p5.push()
           for (let [i, box] of app.boxList.entries()) {
             p5.push()
             const isLastBox = i === app.boxList.length - 1
@@ -56,17 +57,18 @@ export default {
               p5.fill(app.boxColor)
             }
             p5.rotateX(box.rotation.x)
-            p5.rotateY(box.rotation.y)
-            p5.rotateZ(box.rotation.z)
+            p5.rotateZ(box.rotation.y)
+            p5.rotateY(box.rotation.z)
             p5.translate(
-              (box.translation.x + box.size.x / 2) * 50 * app.objectScale,
-              (box.translation.y + box.size.y / 2) * 50 * app.objectScale,
-              (box.translation.z + box.size.z / 2) * 50 * app.objectScale
+              (box.translation.x + box.size.x / 2) * 50 * app.objectScale * -1,
+              (box.translation.z + box.size.z / 2) * 50 * app.objectScale,
+              (box.translation.y + box.size.y / 2) * 50 * app.objectScale
             )
-            p5.scale(box.size.x * app.objectScale, box.size.y * app.objectScale, box.size.z * app.objectScale)
+            p5.scale(box.size.x * app.objectScale, box.size.z * app.objectScale, box.size.y * app.objectScale)
             p5.box(50)
             p5.pop()
           }
+          p5.pop()
         }
       })
     },

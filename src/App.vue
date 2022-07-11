@@ -12,6 +12,32 @@ export default {
     BoxVisualizer
   },
   data: () => ({
+    // mockBoxList: [
+    //   {
+    //     id: 'placed-1',
+    //     size: { x: 1, y: 1, z: 1 },
+    //     translation: { x: 0, y: 0, z: 0 },
+    //     rotation: { x: 0, y: 45, z: 0 },
+    //   },
+    //   {
+    //     id: 'placed-2',
+    //     size: { x: 1, y: 1, z: 1 },
+    //     translation: { x: 1, y: 0, z: 0 },
+    //     rotation: { x: 0, y: 0, z: 0 },
+    //   },
+    //   {
+    //     id: 'placed-3',
+    //     size: { x: 1, y: 1, z: 3 },
+    //     translation: { x: 1, y: 1, z: 0 },
+    //     rotation: { x: 0, y: -10, z: 0 },
+    //   },
+    //   {
+    //     id: 'placed-4',
+    //     size: { x: 1, y: 1, z: 1 },
+    //     translation: { x: 1, y: 2, z: 0 },
+    //     rotation: { x: 0, y: 0, z: 0 },
+    //   },
+    // ],
     mockBoxList:
       [
         {
@@ -749,6 +775,27 @@ export default {
             "w": 0
           }
         },
+        {
+          "id": "ee7c8b9d-c261-436b-85d2-b1d28dee9abd",
+          "skuId": "",
+          "objectClass": "",
+          "size": {
+            "x": 0.46399998664855957,
+            "y": 0.32600000500679016,
+            "z": 0.3199999928474426
+          },
+          "translation": {
+            "x": 0.23700000762939455,
+            "y": 1.796999999973923,
+            "z": 0.1600000095367432
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 1,
+            "w": 0
+          }
+        }
       ],
     boxList: []
   }),
