@@ -72,6 +72,7 @@ export default {
     renderConveyor(p5) {
       p5.push()
       p5.fill(this.conveyorColor)
+      p5.strokeWeight(0.5)
       p5.translate(0, this.conveyorSize.y * this.objectScale / 2, 0)
       p5.scale(this.conveyorSize.x, this.conveyorSize.y, this.conveyorSize.z)
       p5.box(this.objectScale)

@@ -1323,8 +1323,8 @@ export default {
     boxList: []
   }),
   mounted() {
-    this.loadBoxesDelay(this.mockBoxList)
-    // this.loadBoxes()
+    // this.loadBoxesDelay(this.mockBoxList)
+    this.loadBoxes()
     // this.removeBoxesDelay()
   },
   methods: {
