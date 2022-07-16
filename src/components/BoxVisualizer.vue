@@ -8,13 +8,20 @@ export default {
   props: {
     boxList: { type: Array, default: () => [] },
     boxColor: { type: String, default: () => '#ffffff' },
-    lastBoxColor: { type: String, default: () => '#3B7EDA' },
+    selectedColor: { type: String, default: () => '#3B7EDA' },
     errorColor: { type: String, default: () => '#B71C1C' },
-    lastBoxError: { type: Boolean, default: () => false },
-    canvasSize: { type: Object, default: () => ({ x: 750, y: 750 }) },
     backgroundColor: { type: String, default: () => '#eeeeee' },
     groundColor: { type: String, default: () => '#333333' },
-    objectScale: { type: Number, default: () => 1.4 },
+    selectedBoxError: { type: Boolean, default: () => false },
+  },
+  data() {
+    return {
+      objectScale: 75,
+      selectedBox: null,
+      boxSpeed: 3,
+      boxProgress: 0,
+      canvasSize: { x: 750, y: 750 },
+    }
   },
   mounted() {
     this.generateBoxes(this)
@@ -25,10 +32,7 @@ export default {
       new P5((p5) => {
         // Start
         p5.setup = () => {
-          var canvas = p5.createCanvas(app.canvasSize.x, app.canvasSize.y, p5.WEBGL);
-          canvas.parent("p5Canvas")
-          p5.camera(-250, -250, 300)
-          p5.angleMode(p5.DEGREES)
+          app.setup(p5)
         }
 
         // Update every frame
@@ -36,42 +40,69 @@ export default {
           p5.orbitControl(5, 5, 5)
           p5.scale(1, -1)
           p5.background(app.backgroundColor)
-
-          // Render ground
-          p5.push()
-          p5.fill(app.groundColor)
-          p5.rectMode(p5.CENTER)
-          p5.rotateX(90)
-          p5.translate(0, 0, 1)
-          p5.rect(0, 0, app.canvasSize.x, app.canvasSize.y)
-          p5.pop()
-
-          // Render boxes
-          p5.push()
-          for (let [i, box] of app.boxList.entries()) {
-            p5.push()
-            const isLastBox = i === app.boxList.length - 1
-            if (isLastBox) {
-              p5.fill(app.lastBoxError ? app.errorColor : app.lastBoxColor)
-            } else {
-              p5.fill(app.boxColor)
-            }
-            p5.rotateX(box.rotation.x)
-            p5.rotateZ(box.rotation.y)
-            p5.rotateY(box.rotation.z)
-            p5.translate(
-              (box.translation.x + box.size.x / 2) * 50 * app.objectScale * -1,
-              (box.translation.z + box.size.z / 2) * 50 * app.objectScale,
-              (box.translation.y + box.size.y / 2) * 50 * app.objectScale
-            )
-            p5.scale(box.size.x * app.objectScale, box.size.z * app.objectScale, box.size.y * app.objectScale)
-            p5.box(50)
-            p5.pop()
-          }
-          p5.pop()
+          app.renderGround(p5)
+          app.updateSelectedBox()
+          app.updateBoxProgress(p5)
+          app.renderBoxes(p5)
         }
       })
     },
+    setup(p5) {
+      const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
+      canvas.parent("p5Canvas")
+      p5.camera(-250, -250, 300)
+      p5.angleMode(p5.DEGREES)
+    },
+    renderGround(p5) {
+      p5.push()
+      p5.fill(this.groundColor)
+      p5.rectMode(p5.CENTER)
+      p5.rotateX(90)
+      p5.translate(0, 0, 1)
+      p5.rect(0, 0, this.canvasSize.x, this.canvasSize.y)
+      p5.pop()
+    },
+    updateSelectedBox() {
+      const lastBox = this.boxList[this.boxList.length - 1]
+      if (this.selectedBox != lastBox) {
+        this.selectedBox = lastBox
+        this.boxProgress = 0
+      }
+    },
+    updateBoxProgress(p5) {
+      if (this.boxProgress < 1) {
+        this.boxProgress += this.boxSpeed * p5.deltaTime / 1000
+      }
+    },
+    renderBoxes(p5) {
+      for (let [i, box] of this.boxList.entries()) {
+        p5.push()
+        const isSelectedBox = i === this.boxList.length - 1
+        if (isSelectedBox) {
+          const amt = this.smooth(this.boxProgress)
+          let boxColorOpacity = p5.color(this.selectedBoxError ? this.errorColor : this.selectedColor)
+          boxColorOpacity.setAlpha(amt * 255)
+          p5.fill(boxColorOpacity)
+          p5.strokeWeight(amt)
+        } else {
+          p5.fill(this.boxColor)
+        }
+        p5.rotateX(box.rotation.x)
+        p5.rotateZ(box.rotation.y)
+        p5.rotateY(box.rotation.z)
+        p5.translate(
+          box.translation.x * this.objectScale * -1,
+          box.translation.z * this.objectScale,
+          box.translation.y * this.objectScale
+        )
+        p5.scale(box.size.x, box.size.z, box.size.y)
+        p5.box(this.objectScale)
+        p5.pop()
+      }
+    },
+    smooth(x) {
+      return 0.5 * Math.cos(Math.PI * x + Math.PI) + 0.5
+    }
   }
 }
 </script>
