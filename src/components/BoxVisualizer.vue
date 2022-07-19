@@ -6,36 +6,39 @@
 export default {
   name: 'BoxVisualizer',
   props: {
-    boxList: { type: Array, default: () => [] },
+    boxList: { type: Array, default: () => [] }, // Placed boxes
+    objectScale: { type: Number, default: () => 75 }, // Master scale of rendered objects
+    animationSpeed: { type: Number, default: () => 3 }, // Animation speed for instantiated boxes
+    canvasSize: { type: Object, default: () => ({ x: 750, y: 750 }) }, // Canvas size in pixels
+    groundSize: { type: Object, default: () => ({ x: 10, y: 0.05, z: 10 }) },
+    selectedBoxError: { type: Boolean, default: () => false }, // Error state of selected box
+    // Colors
     boxColor: { type: String, default: () => '#ffffff' },
     selectedColor: { type: String, default: () => '#3B7EDA' },
     errorColor: { type: String, default: () => '#B71C1C' },
     backgroundColor: { type: String, default: () => '#eeeeee' },
     groundColor: { type: String, default: () => '#333333' },
-    selectedBoxError: { type: Boolean, default: () => false },
   },
   data() {
     return {
-      currentBoxSlider: null,
-      renderedBoxes: [],
       selectedBox: null,
-      boxSpeed: 3,
-      boxProgress: 1,
-      objectScale: 75,
-      canvasSize: { x: 750, y: 750 },
+      boxSlider: null, // Slider to control the number of rendered Boxes
+      numRenderedBoxes: 0,
+      animationProgress: 1,
     }
   },
   mounted() {
     this.generateBoxes(this)
   },
   methods: {
+    // Uses p5 to render the desired number of boxes to the canvas
     generateBoxes(app) {
       const P5 = require('p5')
       new P5((p5) => {
-        // Start
+        // Start the sketch
         p5.setup = () => {
           app.setup(p5)
-          app.createCurrentBoxSlider(p5)
+          app.createBoxSlider(p5, app.boxList.length)
         }
 
         // Update every frame
@@ -44,73 +47,92 @@ export default {
           p5.scale(1, -1)
           p5.background(app.backgroundColor)
           app.renderGround(p5)
-          app.updateRenderedBoxes()
-          app.updateBoxProgress(p5)
+          app.updateRenderedBoxes(p5)
+          app.updateAnimation(p5)
           app.renderBoxes(p5)
         }
       })
     },
+    // Sets up canvas and camera
     setup(p5) {
       const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
       canvas.parent("p5Canvas")
       p5.camera(-250, -250, 300)
       p5.angleMode(p5.DEGREES)
     },
-    createCurrentBoxSlider(p5) {
-      this.currentBoxSlider = p5.createSlider(0, this.boxList.length, this.boxList.length)
-      this.currentBoxSlider.parent(document.getElementById('p5Canvas'))
-      this.currentBoxSlider.position(p5.width / 4, p5.height * 7 / 8)
-      this.currentBoxSlider.style('width', p5.width / 2 + 'px');
-      this.currentBoxSlider.elt.mouseIsOver = false
-      this.currentBoxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
-      this.currentBoxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
+    // Slider to control the number of rendered boxes
+    createBoxSlider(p5, value) {
+      if (this.boxSlider) {
+        this.boxSlider.remove()
+      }
+      this.boxSlider = p5.createSlider(0, this.boxList.length, value)
+      this.boxSlider.parent(document.getElementById('p5Canvas'))
+      this.boxSlider.position(p5.width / 4, p5.height * 7 / 8)
+      this.boxSlider.style('width', p5.width / 2 + 'px');
+      this.boxSlider.elt.mouseIsOver = false
+      this.boxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
+      this.boxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
     },
+    // Only allow orbiting the scene if the slider is not being interacted with
     orbitControl(p5) {
-      // if the mouse is not inside the box slider
-      if (!this.currentBoxSlider.elt.mouseIsOver) {
-        p5.orbitControl(5, 5, 5)
+      if (!this.boxSlider.elt.mouseIsOver) {
+        p5.orbitControl(5, 5, 0)
       }
     },
     renderGround(p5) {
       p5.push()
       p5.fill(this.groundColor)
-      p5.rectMode(p5.CENTER)
-      p5.rotateX(90)
-      p5.translate(0, 0, 1)
-      p5.rect(0, 0, this.canvasSize.x, this.canvasSize.y)
+      p5.scale(this.groundSize.x, this.groundSize.y, this.groundSize.z)
+      p5.box(this.objectScale)
       p5.pop()
     },
-    updateRenderedBoxes() {
-      const lastBox = this.boxList[this.boxList.length - 1]
+    // Update the scene's rendered boxes according to the boxSlider's value
+    updateRenderedBoxes(p5) {
+      const lastBox = this.boxList[this.boxList.length - 1] // Last placed box
+      // Initialize selectedBox on first render
       if (!this.selectedBox && lastBox) {
         this.selectedBox = lastBox
       }
 
+      this.numRenderedBoxes = this.boxSlider.value()
+
+      // When a new box is placed, update selected box & restart animation
       if (this.selectedBox != lastBox) {
         this.selectedBox = lastBox
-        this.boxProgress = 0
-      }
-
-      this.renderedBoxes = this.boxList.slice(0, this.currentBoxSlider.value())
-    },
-    updateBoxProgress(p5) {
-      if (this.boxProgress < 1) {
-        this.boxProgress += Math.min(this.boxSpeed * p5.deltaTime / 1000, 1)
+        this.animationProgress = 0
+        // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
+        this.createBoxSlider(p5, this.numRenderedBoxes == this.boxList.length - 1 ? this.boxList.length : this.numRenderedBoxes)
       }
     },
+    updateAnimation(p5) {
+      if (this.animationProgress < 1) {
+        // Using deltaTime to make animations framerate independent
+        this.animationProgress += Math.min(this.animationSpeed * p5.deltaTime / 1000, 1)
+      }
+    },
+    // Displays desired boxes, and shows a "ghost" of boxes that will be placed
     renderBoxes(p5) {
-      for (let [i, box] of this.renderedBoxes.entries()) {
+      for (let [i, box] of this.boxList.entries()) {
         p5.push()
-        const isSelectedBox = i === this.renderedBoxes.length - 1
+        const isSelectedBox = i === this.boxList.length - 1
+        const isRenderedBox = i < this.numRenderedBoxes
+
+        let fillColor = p5.color(this.boxColor)
+        // Selected boxes are a different color & have instantiation animations
         if (isSelectedBox) {
-          const amt = this.smooth(this.boxProgress)
+          const amt = this.smooth(this.animationProgress)
           let boxColorOpacity = p5.color(this.selectedBoxError ? this.errorColor : this.selectedColor)
           boxColorOpacity.setAlpha(amt * 255)
-          p5.fill(boxColorOpacity)
+          fillColor = boxColorOpacity
           p5.strokeWeight(amt)
-        } else {
-          p5.fill(this.boxColor)
         }
+        // If a box is not rendered, it is a ghost box and should have lowered opacity
+        if (!isRenderedBox) {
+          fillColor.setAlpha(Math.min(p5.alpha(fillColor), 50))
+          p5.strokeWeight(0)
+        }
+
+        // Box transformations
         p5.rotateX(box.rotation.x)
         p5.rotateZ(box.rotation.y)
         p5.rotateY(box.rotation.z)
@@ -120,10 +142,12 @@ export default {
           box.translation.y * this.objectScale
         )
         p5.scale(box.size.x, box.size.z, box.size.y)
+        p5.fill(fillColor)
         p5.box(this.objectScale)
         p5.pop()
       }
     },
+    // Smooth interpolation of range [0, 1] for animation purposes
     smooth(x) {
       return 0.5 * Math.cos(Math.PI * x + Math.PI) + 0.5
     }
@@ -133,7 +157,6 @@ export default {
 
 <style>
 #p5Canvas {
-  /* border */
   position: relative;
   border: 2px solid rgb(115, 115, 115);
 }
