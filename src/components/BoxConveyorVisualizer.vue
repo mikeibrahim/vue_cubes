@@ -7,10 +7,10 @@ export default {
   name: 'BoxConveyorVisualizer',
   props: {
     boxList: { type: Array, default: () => [] }, // Queue of boxes
-    boxCount: { type: Number, default: () => 0 }, // Number of boxes to show on conveyor
+    boxCount: { type: Number, default: () => 3 }, // Number of boxes to show on conveyor
     animationSpeed: { type: Number, default: () => 1 }, // Animation speed for instantiated boxes
-    objectScale: { type: Number, default: () => 75 }, // Master scale of rendered objects
-    canvasSize: { type: Object, default: () => ({ x: 750, y: 750 }) }, // Canvas size in pixels
+    objectScale: { type: Number, default: () => 150 }, // Master scale of rendered objects
+    canvasSize: { type: Object, default: () => ({ x: 750, y: 300 }) }, // Canvas size in pixels
     conveyorSize: { type: Object, default: () => ({ x: 4, y: 0.25, z: 1 }) },
     groundSize: { type: Object, default: () => ({ x: 10, y: 0.05, z: 10 }) },
     selectedBoxError: { type: Boolean, default: () => false }, // Error state of selected box
@@ -43,7 +43,7 @@ export default {
 
         // Update every frame
         p5.draw = () => {
-          p5.orbitControl(5, 5, 0)
+          p5.orbitControl(5, 0, 0)
           p5.scale(1, -1)
           p5.background(app.backgroundColor)
           app.renderGround(p5)
@@ -59,7 +59,7 @@ export default {
     setup(p5) {
       const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
       canvas.parent("p5Canvas")
-      p5.camera(-250, -250, 300)
+      p5.camera(0, -200, 300)
       p5.angleMode(p5.DEGREES)
       this.previousBoxList = this.boxList.slice()
     },
@@ -88,7 +88,7 @@ export default {
       }
 
       // If the first box is getting removed from the queue
-      if (this.boxList[0] != this.selectedBox) {
+      if (this.selectedBox && this.selectedBox.id != this.boxList[0].id) {
         this.renderedBoxes = [this.selectedBox].concat(this.boxList.slice(0, this.boxCount))
         this.selectedBox = this.boxList[0]
         this.animationProgress = 0
@@ -101,7 +101,7 @@ export default {
       }
     },
     updateAnimation(p5) {
-      if (this.animationProgress < 1 && this.renderedBoxes[0] != this.selectedBox) {
+      if (this.animationProgress < 1 && this.selectedBox && this.selectedBox.id != this.renderedBoxes[0].id) {
         this.animationProgress = this.animationProgress + this.animationSpeed * p5.deltaTime / 1000
       }
     },

@@ -9,8 +9,8 @@ export default {
     boxList: { type: Array, default: () => [] }, // Placed boxes
     objectScale: { type: Number, default: () => 75 }, // Master scale of rendered objects
     animationSpeed: { type: Number, default: () => 3 }, // Animation speed for instantiated boxes
-    canvasSize: { type: Object, default: () => ({ x: 750, y: 750 }) }, // Canvas size in pixels
-    groundSize: { type: Object, default: () => ({ x: 10, y: 0.05, z: 10 }) },
+    canvasSize: { type: Object, default: () => ({ x: 750, y: 500 }) }, // Canvas size in pixels
+    groundSize: { type: Object, default: () => ({ x: 5, y: 0.05, z: 2.27 }) },
     selectedBoxError: { type: Boolean, default: () => false }, // Error state of selected box
     // Colors
     boxColor: { type: String, default: () => '#ffffff' },
@@ -57,7 +57,7 @@ export default {
     setup(p5) {
       const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
       canvas.parent("p5Canvas")
-      p5.camera(-250, -250, 300)
+      p5.camera(-250, -150, 0)
       p5.angleMode(p5.DEGREES)
     },
     // Slider to control the number of rendered boxes
@@ -76,7 +76,7 @@ export default {
     // Only allow orbiting the scene if the slider is not being interacted with
     orbitControl(p5) {
       if (!this.boxSlider.elt.mouseIsOver) {
-        p5.orbitControl(5, 5, 0)
+        p5.orbitControl(5, 0, 0)
       }
     },
     renderGround(p5) {
@@ -97,7 +97,7 @@ export default {
       this.numRenderedBoxes = this.boxSlider.value()
 
       // When a new box is placed, update selected box & restart animation
-      if (this.selectedBox != lastBox) {
+      if (this.selectedBox && this.selectedBox.id != lastBox.id) {
         this.selectedBox = lastBox
         this.animationProgress = 0
         // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
@@ -139,7 +139,7 @@ export default {
         p5.translate(
           box.translation.x * this.objectScale * -1,
           box.translation.z * this.objectScale,
-          box.translation.y * this.objectScale
+          (box.translation.y - this.groundSize.z / 2) * this.objectScale
         )
         p5.scale(box.size.x, box.size.z, box.size.y)
         p5.fill(fillColor)

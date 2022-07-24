@@ -1481,7 +1481,7 @@ export default {
     async loadBoxesDelay(boxList) {
       for (let box of boxList) {
         this.boxList.push(box)
-        await this.delay(2)
+        await this.delay(3)
       }
     },
     loadBoxes() {
