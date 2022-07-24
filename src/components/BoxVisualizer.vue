@@ -67,8 +67,8 @@ export default {
       }
       this.boxSlider = p5.createSlider(0, this.boxList.length, value)
       this.boxSlider.parent(document.getElementById('p5Canvas'))
-      this.boxSlider.position(p5.width / 4, p5.height * 7 / 8)
-      this.boxSlider.style('width', p5.width / 2 + 'px');
+      this.boxSlider.style('width', p5.width / 4 + 'px');
+      this.boxSlider.addClass("slider");
       this.boxSlider.elt.mouseIsOver = false
       this.boxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
       this.boxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
@@ -159,5 +159,16 @@ export default {
 #p5Canvas {
   position: relative;
   border: 2px solid rgb(115, 115, 115);
+  position: relative;
+}
+
+.slider {
+  position: absolute;
+  top: 90%;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  transform: scale(2);
 }
 </style>
