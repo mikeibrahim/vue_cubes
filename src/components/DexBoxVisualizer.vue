@@ -33,6 +33,7 @@ export default {
   methods: {
     // Uses p5 to render the desired number of boxes to the canvas
     generateBoxes(app) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const P5 = require('p5')
       new P5((p5) => {
         // Start the sketch
