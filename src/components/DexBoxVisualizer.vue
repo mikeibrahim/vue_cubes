@@ -10,7 +10,7 @@ export default {
     objectScale: { type: Number, default: () => 75 }, // Master scale of rendered objects
     animationSpeed: { type: Number, default: () => 3 }, // Animation speed for instantiated boxes
     canvasSize: { type: Object, default: () => ({ x: 750, y: 500 }) }, // Canvas size in pixels
-    groundSize: { type: Object, default: () => ({ x: 5, y: 0.05, z: 2.27 }) },
+    groundSize: { type: Object, default: () => ({ x: 4, y: 0.05, z: 2.27 }) },
     selectedBoxError: { type: Boolean, default: () => false }, // Error state of selected box
     // Colors
     boxColor: { type: String, default: () => '#ffffff' },
@@ -81,6 +81,7 @@ export default {
     renderGround(p5) {
       p5.push()
       p5.fill(this.groundColor)
+      p5.translate((-this.groundSize.x / 2 + 1) * this.objectScale, 0, 0)
       p5.scale(this.groundSize.x, this.groundSize.y, this.groundSize.z)
       p5.box(this.objectScale)
       p5.pop()
