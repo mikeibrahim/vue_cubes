@@ -48,6 +48,9 @@ export default {
           p5.scale(1, -1)
           p5.background(app.backgroundColor)
           app.renderGround(p5)
+          if (!app.boxList) {
+            return
+          }
           app.updateRenderedBoxes(p5)
           app.updateAnimation(p5)
           app.renderBoxes(p5)
