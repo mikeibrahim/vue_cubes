@@ -1,8 +1,8 @@
 <template>
   <div id="main">
     <h2>Visualizer</h2>
-    <DexBoxConveyor :boxList="boxList" :boxCount="3" />
-    <DexBoxVisualizer :boxList="boxList" />
+    <DexBoxConveyor :boxList="null" :boxCount="3" />
+    <DexBoxVisualizer :boxList="null" />
   </div>
 </template>
 

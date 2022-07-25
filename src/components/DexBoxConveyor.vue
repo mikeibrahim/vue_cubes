@@ -36,6 +36,9 @@ export default {
   },
   watch: {
     boxList(newBoxList) {
+      if (!newBoxList) {
+        return
+      }
       this.renderedBoxes = newBoxList.slice(0, this.boxCount)
       if (this.selectedBox) {
         if (newBoxList.length >= 2 && this.selectedBox.id == newBoxList[1].id) { // If a box was added back into the front of the queue

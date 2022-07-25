@@ -33,6 +33,9 @@ export default {
   },
   watch: {
     boxList(newBoxList) {
+      if (!newBoxList) {
+        return
+      }
       if (this.selectedBox) {
         if (newBoxList.length >= 2 && this.selectedBox.id == newBoxList[newBoxList.length - 2].id) {
           this.animationProgress = 0
@@ -171,5 +174,6 @@ export default {
   margin-left: auto;
   margin-right: auto;
   transform: scale(2);
+  z-index: 100;
 }
 </style>
