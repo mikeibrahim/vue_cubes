@@ -1,10 +1,10 @@
 <template>
-  <div id="p5Canvas"></div>
+  <div id="p5BoxVisualizer"></div>
 </template>
 
 <script>
 export default {
-  name: 'BoxVisualizer',
+  name: 'DexBoxVisualizer',
   props: {
     boxList: { type: Array, default: () => [] }, // Placed boxes
     objectScale: { type: Number, default: () => 75 }, // Master scale of rendered objects
@@ -56,7 +56,7 @@ export default {
     // Sets up canvas and camera
     setup(p5) {
       const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
-      canvas.parent("p5Canvas")
+      canvas.parent("p5BoxVisualizer")
       p5.camera(-250, -150, 0)
       p5.angleMode(p5.DEGREES)
     },
@@ -66,12 +66,12 @@ export default {
         this.boxSlider.remove()
       }
       this.boxSlider = p5.createSlider(0, this.boxList.length, value)
-      this.boxSlider.parent(document.getElementById('p5Canvas'))
+      this.boxSlider.parent(document.getElementById('p5BoxVisualizer'))
       this.boxSlider.style('width', p5.width / 4 + 'px');
       this.boxSlider.addClass("slider");
-      this.boxSlider.elt.mouseIsOver = false
-      this.boxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
-      this.boxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
+      // this.boxSlider.elt.mouseIsOver = false
+      // this.boxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
+      // this.boxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
     },
     // Only allow orbiting the scene if the slider is not being interacted with
     orbitControl(p5) {
@@ -97,7 +97,7 @@ export default {
       this.numRenderedBoxes = this.boxSlider.value()
 
       // When a new box is placed, update selected box & restart animation
-      if (this.selectedBox && this.selectedBox.id != lastBox.id) {
+      if (this.selectedBox && lastBox && this.selectedBox.id != lastBox.id) {
         this.selectedBox = lastBox
         this.animationProgress = 0
         // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
@@ -156,7 +156,7 @@ export default {
 </script>
 
 <style>
-#p5Canvas {
+#p5BoxVisualizer {
   position: relative;
   border: 2px solid rgb(115, 115, 115);
   position: relative;
@@ -164,7 +164,7 @@ export default {
 
 .slider {
   position: absolute;
-  top: 90%;
+  top: 110%;
   left: 0;
   right: 0;
   margin-left: auto;

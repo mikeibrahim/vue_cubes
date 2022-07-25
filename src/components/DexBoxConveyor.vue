@@ -1,10 +1,10 @@
 <template>
-  <div id="p5Canvas"></div>
+  <div id="p5BoxConveyor"></div>
 </template>
 
 <script>
 export default {
-  name: 'BoxConveyorVisualizer',
+  name: 'DexBoxConveyor',
   props: {
     boxList: { type: Array, default: () => [] }, // Queue of boxes
     boxCount: { type: Number, default: () => 3 }, // Number of boxes to show on conveyor
@@ -58,10 +58,9 @@ export default {
     // Sets up canvas and camera
     setup(p5) {
       const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
-      canvas.parent("p5Canvas")
+      canvas.parent("p5BoxConveyor")
       p5.camera(0, -200, 300)
       p5.angleMode(p5.DEGREES)
-      this.previousBoxList = this.boxList.slice()
     },
     renderGround(p5) {
       p5.push()
@@ -83,12 +82,14 @@ export default {
     updateRenderedBoxes() {
       // Initialize the renderedBoxes on first render
       if (!this.selectedBox && this.boxList.length > 0) {
+        console.log("init");
         this.selectedBox = this.boxList[0]
         this.renderedBoxes = this.boxList.slice(0, this.boxCount)
       }
 
       // If the first box is getting removed from the queue
       if (this.selectedBox && this.selectedBox.id != this.boxList[0].id) {
+        console.log("first box removed");
         this.renderedBoxes = [this.selectedBox].concat(this.boxList.slice(0, this.boxCount))
         this.selectedBox = this.boxList[0]
         this.animationProgress = 0
@@ -146,7 +147,7 @@ export default {
 </script>
 
 <style>
-#p5Canvas {
+#p5BoxConveyor {
   /* border */
   border: 2px solid rgb(115, 115, 115);
 }
