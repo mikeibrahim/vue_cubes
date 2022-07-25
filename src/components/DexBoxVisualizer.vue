@@ -105,7 +105,7 @@ export default {
       p5.pop()
     },
     // Update the scene's rendered boxes according to the boxSlider's value
-    updateRenderedBoxes(p5) {
+    updateRenderedBoxes() {
       this.numRenderedBoxes = this.boxSlider.value()
     },
     updateAnimation(p5) {
