@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     generateBoxes(app) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // // eslint-disable-next-line @typescript-eslint/no-var-requires
       const P5 = require('p5')
       new P5((p5) => {
         // Start

@@ -2,7 +2,7 @@
   <div id="main">
     <h2>Visualizer</h2>
     <DexBoxConveyor :boxList="boxList" :boxCount="5" />
-    <DexBoxVisualizer :boxList="boxList" />
+    <DexBoxVisualizer :boxList="null" />
   </div>
 </template>
 

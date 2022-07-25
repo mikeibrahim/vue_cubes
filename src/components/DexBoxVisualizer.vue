@@ -33,13 +33,13 @@ export default {
   methods: {
     // Uses p5 to render the desired number of boxes to the canvas
     generateBoxes(app) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // // eslint-disable-next-line @typescript-eslint/no-var-requires
       const P5 = require('p5')
       new P5((p5) => {
         // Start the sketch
         p5.setup = () => {
           app.setup(p5)
-          app.createBoxSlider(p5, app.boxList.length)
+          app.createBoxSlider(p5, app.boxList ? app.boxList.length : 1)
         }
 
         // Update every frame
@@ -66,19 +66,14 @@ export default {
       if (this.boxSlider) {
         this.boxSlider.remove()
       }
-      this.boxSlider = p5.createSlider(0, this.boxList.length, value)
+      this.boxSlider = p5.createSlider(0, this.boxList ? this.boxList.length : 1, value)
       this.boxSlider.parent(document.getElementById('p5BoxVisualizer'))
       this.boxSlider.style('width', p5.width / 4 + 'px');
       this.boxSlider.addClass("slider");
-      // this.boxSlider.elt.mouseIsOver = false
-      // this.boxSlider.elt.onmouseover = function () { this.mouseIsOver = true }
-      // this.boxSlider.elt.onmouseout = function () { this.mouseIsOver = false }
     },
     // Only allow orbiting the scene if the slider is not being interacted with
     orbitControl(p5) {
-      if (!this.boxSlider.elt.mouseIsOver) {
-        p5.orbitControl(5, 0, 0)
-      }
+      p5.orbitControl(5, 0, 0)
     },
     renderGround(p5) {
       p5.push()
