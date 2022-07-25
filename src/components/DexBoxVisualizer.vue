@@ -103,21 +103,7 @@ export default {
     },
     // Update the scene's rendered boxes according to the boxSlider's value
     updateRenderedBoxes(p5) {
-      // const lastBox = this.boxList[this.boxList.length - 1] // Last placed box
-      // // Initialize selectedBox on first render
-      // if (!this.selectedBox && lastBox) {
-      //   this.selectedBox = lastBox
-      // }
-
       this.numRenderedBoxes = this.boxSlider.value()
-
-      // // When a new box is placed, update selected box & restart animation
-      // if (this.selectedBox && lastBox && this.selectedBox.id != lastBox.id) {
-      //   this.selectedBox = lastBox
-      //   this.animationProgress = 0
-      //   // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
-      //   this.createBoxSlider(p5, this.numRenderedBoxes == this.boxList.length - 1 ? this.boxList.length : this.numRenderedBoxes)
-      // }
     },
     updateAnimation(p5) {
       if (this.animationProgress < 1) {
