@@ -25,10 +25,24 @@ export default {
       boxSlider: null, // Slider to control the number of rendered Boxes
       numRenderedBoxes: 0,
       animationProgress: 1,
+      createSlider: null,
     }
   },
   mounted() {
     this.generateBoxes(this)
+  },
+  watch: {
+    boxList(newBoxList) {
+      if (this.selectedBox) {
+        if (newBoxList.length >= 2 && this.selectedBox.id == newBoxList[newBoxList.length - 2].id) {
+          this.animationProgress = 0
+        }
+      }
+      if (this.createSlider) {
+        this.createBoxSlider(this.numRenderedBoxes == newBoxList.length - 1 ? newBoxList.length : this.numRenderedBoxes)
+      }
+      this.selectedBox = newBoxList[newBoxList.length - 1]
+    },
   },
   methods: {
     // Uses p5 to render the desired number of boxes to the canvas
@@ -39,7 +53,7 @@ export default {
         // Start the sketch
         p5.setup = () => {
           app.setup(p5)
-          app.createBoxSlider(p5, app.boxList ? app.boxList.length : 1)
+          app.createBoxSlider(app.boxList ? app.boxList.length : 1)
         }
 
         // Update every frame
@@ -63,15 +77,16 @@ export default {
       canvas.parent("p5BoxVisualizer")
       p5.camera(-250, -150, 0)
       p5.angleMode(p5.DEGREES)
+      this.createSlider = (min, max, value) => p5.createSlider(min, max, value)
     },
     // Slider to control the number of rendered boxes
-    createBoxSlider(p5, value) {
+    createBoxSlider(value) {
       if (this.boxSlider) {
         this.boxSlider.remove()
       }
-      this.boxSlider = p5.createSlider(0, this.boxList ? this.boxList.length : 1, value)
+      this.boxSlider = this.createSlider(0, this.boxList ? this.boxList.length : 1, value)
       this.boxSlider.parent(document.getElementById('p5BoxVisualizer'))
-      this.boxSlider.style('width', p5.width / 4 + 'px');
+      this.boxSlider.style('width', this.canvasSize.x / 4 + 'px');
       this.boxSlider.addClass("slider");
     },
     // Only allow orbiting the scene if the slider is not being interacted with
@@ -88,21 +103,21 @@ export default {
     },
     // Update the scene's rendered boxes according to the boxSlider's value
     updateRenderedBoxes(p5) {
-      const lastBox = this.boxList[this.boxList.length - 1] // Last placed box
-      // Initialize selectedBox on first render
-      if (!this.selectedBox && lastBox) {
-        this.selectedBox = lastBox
-      }
+      // const lastBox = this.boxList[this.boxList.length - 1] // Last placed box
+      // // Initialize selectedBox on first render
+      // if (!this.selectedBox && lastBox) {
+      //   this.selectedBox = lastBox
+      // }
 
       this.numRenderedBoxes = this.boxSlider.value()
 
-      // When a new box is placed, update selected box & restart animation
-      if (this.selectedBox && lastBox && this.selectedBox.id != lastBox.id) {
-        this.selectedBox = lastBox
-        this.animationProgress = 0
-        // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
-        this.createBoxSlider(p5, this.numRenderedBoxes == this.boxList.length - 1 ? this.boxList.length : this.numRenderedBoxes)
-      }
+      // // When a new box is placed, update selected box & restart animation
+      // if (this.selectedBox && lastBox && this.selectedBox.id != lastBox.id) {
+      //   this.selectedBox = lastBox
+      //   this.animationProgress = 0
+      //   // Only stay at the slider's current value if it is not maxed out, otherwise follow the last box
+      //   this.createBoxSlider(p5, this.numRenderedBoxes == this.boxList.length - 1 ? this.boxList.length : this.numRenderedBoxes)
+      // }
     },
     updateAnimation(p5) {
       if (this.animationProgress < 1) {

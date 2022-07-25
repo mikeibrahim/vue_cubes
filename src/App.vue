@@ -1,8 +1,8 @@
 <template>
   <div id="main">
     <h2>Visualizer</h2>
-    <DexBoxConveyor :boxList="boxList" :boxCount="5" />
-    <DexBoxVisualizer :boxList="null" />
+    <DexBoxConveyor :boxList="boxList" :boxCount="3" />
+    <DexBoxVisualizer :boxList="boxList" />
   </div>
 </template>
 
@@ -1472,27 +1472,41 @@ export default {
     boxList: []
   }),
   mounted() {
-    this.loadBoxesDelay(this.mockBoxList)
-    // this.loadBoxes()
-    // this.removeBoxesDelay()
+    // this.loadBoxesFrontDelay(this.mockBoxList)
+    // this.loadBoxesEndDelay(this.mockBoxList)
+    this.loadBoxes()
+    // this.removeBoxesEndDelay(this.mockBoxList)
+    // this.removeBoxesFrontDelay()
   },
   methods: {
     delay(s) {
       return new Promise(resolve => setTimeout(resolve, s * 1000))
     },
-    async loadBoxesDelay(boxList) {
+    async loadBoxesEndDelay(boxList) {
       for (let box of boxList) {
-        this.boxList.push(box)
         await this.delay(3)
+        this.boxList.push(box)
+      }
+    },
+    async loadBoxesFrontDelay(boxList) {
+      for (let box of boxList) {
+        await this.delay(3)
+        this.boxList.unshift(box)
       }
     },
     loadBoxes() {
       this.boxList = this.mockBoxList
     },
-    async removeBoxesDelay() {
+    async removeBoxesFrontDelay() {
       while (this.boxList.length > 0) {
         await this.delay(2)
         this.boxList.shift()
+      }
+    },
+    async removeBoxesEndDelay() {
+      while (this.boxList.length > 0) {
+        await this.delay(2)
+        this.boxList.pop()
       }
     }
   }

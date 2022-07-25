@@ -27,10 +27,32 @@ export default {
       renderedBoxes: [],
       selectedBox: null,
       animationProgress: 0,
+      animating: false,
+      animationDirection: 1,
     }
   },
   mounted() {
     this.generateBoxes(this)
+  },
+  watch: {
+    boxList(newBoxList) {
+      this.renderedBoxes = newBoxList.slice(0, this.boxCount)
+      if (this.selectedBox) {
+        if (newBoxList.length >= 2 && this.selectedBox.id == newBoxList[1].id) { // If a box was added back into the front of the queue
+          if (newBoxList.length > this.boxCount) {
+            this.renderedBoxes.push(newBoxList[this.boxCount])
+          }
+          this.animating = true
+          this.animationDirection = -1
+          this.animationProgress = 1
+        } else if (this.selectedBox.id != newBoxList[0].id) { // If a box was removed from the front of the queue
+          this.renderedBoxes.unshift(this.selectedBox)
+          this.animating = true
+          this.animationDirection = 1
+        }
+      }
+      this.selectedBox = newBoxList[0]
+    },
   },
   methods: {
     generateBoxes(app) {
@@ -49,7 +71,10 @@ export default {
           p5.background(app.backgroundColor)
           app.renderGround(p5)
           app.renderConveyor(p5)
-          app.updateRenderedBoxes()
+          if (!app.boxList) {
+            return
+          }
+          app.checkAnimationProgress()
           app.updateAnimation(p5)
           app.renderBoxes(p5)
         }
@@ -80,31 +105,23 @@ export default {
       p5.pop()
     },
     // Handles animation logic & display of boxes
-    updateRenderedBoxes() {
-      // Initialize the renderedBoxes on first render
-      if (!this.selectedBox && this.boxList.length > 0) {
-        console.log("init");
-        this.selectedBox = this.boxList[0]
-        this.renderedBoxes = this.boxList.slice(0, this.boxCount)
-      }
-
-      // If the first box is getting removed from the queue
-      if (this.selectedBox && this.selectedBox.id != this.boxList[0].id) {
-        console.log("first box removed");
-        this.renderedBoxes = [this.selectedBox].concat(this.boxList.slice(0, this.boxCount))
-        this.selectedBox = this.boxList[0]
+    checkAnimationProgress() {
+      // After animation progress is complete, return to static box state
+      if (this.animationProgress > 1) {
         this.animationProgress = 0
-      }
-
-      // After animation progress is complete, 
-      if (this.animationProgress >= 1) {
+        this.renderedBoxes.shift() // Remove first item from queue
+        this.animating = false;
+      } else if (this.animationProgress < 0) {
         this.animationProgress = 0
-        this.renderedBoxes.shift()
+        if (this.renderedBoxes.length > this.boxCount) {
+          this.renderedBoxes.pop() // Remove last item from queue
+        }
+        this.animating = false;
       }
     },
     updateAnimation(p5) {
-      if (this.animationProgress < 1 && this.selectedBox && this.selectedBox.id != this.renderedBoxes[0].id) {
-        this.animationProgress = this.animationProgress + this.animationSpeed * p5.deltaTime / 1000
+      if (this.animating) {
+        this.animationProgress = this.animationProgress + this.animationSpeed * this.animationDirection * p5.deltaTime / 1000
       }
     },
     // Displays boxes that are in the queue
@@ -117,10 +134,10 @@ export default {
           fillColor = this.selectedBoxError ? this.selectedBoxErrorColor : this.selectedBoxColor
         }
         // Boxes in the front/back of queue have opacity animations
-        else if (i == 0 || i == this.boxCount) {
+        if (i == 0 || i == this.boxCount) {
           let amt = this.smooth(this.animationProgress)
           amt = i == 0 ? 1 - amt : amt
-          let boxColorOpacity = p5.color(this.boxColor)
+          let boxColorOpacity = p5.color(fillColor)
           boxColorOpacity.setAlpha(amt * 255)
           fillColor = boxColorOpacity
           p5.strokeWeight(amt)
