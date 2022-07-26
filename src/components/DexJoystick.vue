@@ -3,27 +3,33 @@
 </template>
 
 <script>
+import P5 from 'p5'
+
 export default {
   name: 'DexJoystick',
   props: {
     canvasSize: { type: Object, default: () => ({ x: 400, y: 400 }) }, // Canvas size in pixels
     pointerSize: { type: Number, default: () => 20 },
     objectScale: { type: Number, default: () => 1 },
+    connectMessage: { type: String, default: () => 'Connect Joystick' },
     // Colors
     enabledColor: { type: String, default: () => '#3B7EDA' },
-    disabledColor: { type: String, default: () => '#333333' },
-    pointerColor: { type: String, default: () => '#B71C1C' },
-    backgroundColor: { type: String, default: () => '#eeeeee' },
+    disabledColor: { type: String, default: () => '#546e7a' },
+    pointerColor: { type: String, default: () => '#ffffff' },
+    backgroundColor: { type: String, default: () => '#ffffff' },
   },
   data() {
     return {
+      p5: null,
+      connectButton: null,
       joystick: null,
       enabled: false,
       joystickData: {
-        x: 0, // [0, 1]
-        y: 0, // [0, 1]
+        x: 0, // [-1, 1]
+        y: 0, // [-1, 1]
         pressed: false,
       },
+      prevPressed: false,
     }
   },
   mounted() {
@@ -31,110 +37,135 @@ export default {
   },
   methods: {
     renderJoystick(app) {
-      // // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const P5 = require('p5')
       new P5((p5) => {
         // Start
         p5.setup = () => {
           app.setup(p5)
-          app.createConnectButton(p5, app)
+          app.createConnectButton()
         }
 
         // Update every frame
         p5.draw = () => {
           p5.background(app.backgroundColor)
-          app.renderJoystickMoveArea(p5)
-          app.renderJoystickMovement(p5)
+          app.renderJoystickMoveArea()
+          app.renderJoystickMovement()
         }
       })
     },
     setup(p5) {
-      const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y);
+      this.p5 = p5
+      const canvas = this.p5.createCanvas(this.canvasSize.x, this.canvasSize.y)
       canvas.parent("p5Joystick")
     },
-    async createConnectButton(p5, app) {
-      let device = null;
-      await navigator.hid.getDevices().then(devices => {
-        device = devices[0];
+    createConnectButton() {
+      navigator.hid.getDevices().then(devices => {
+        this.connectButton?.remove()
+        if (devices.length == 0) {
+          this.connectButton = this.p5.createButton(this.connectMessage)
+          this.connectButton.parent("p5Joystick")
+          this.connectButton.addClass("connectButton")
+          this.connectButton.mousePressed(() => {
+            navigator.hid.requestDevice({ filters: [{ vendorId: 0x068e }] }).then(devices => {
+              if (devices.length == 0) {
+                console.log("No device found")
+                return;
+              }
+              this.setUpDevice(devices[0])
+              this.connectButton.remove()
+            })
+          });
+        } else {
+          this.setUpDevice(devices[0])
+        }
       })
-
-      const inputReport = (event, app) => {
-        const { data, device, reportId } = event
-        const xRaw = data.getUint8(1)
-        const yRaw = data.getUint8(3)
-        const buttonRaw = data.getUint8(4)
-        app.joystickData = {
-          x: xRaw <= 8 ? app.scale(xRaw, 0, 8, -1, 0) : app.scale(xRaw, 8, 15, 0, 1),
-          y: yRaw <= 8 ? app.scale(yRaw, 0, 8, -1, 0) : app.scale(yRaw, 8, 15, 0, 1),
-          pressed: buttonRaw == 1,
-        }
-      }
-
-      const setUpDevice = (device, app) => {
-        app.joystick = device;
-        app.enabled = true;
-        if (!app.joystick.opened) {
-          app.joystick.open();
-        }
-        app.joystick.addEventListener("inputreport", (event) => inputReport(event, app));
-      }
-
-      // Initial pairing of device
-      if (!device) {
-        let button = p5.createButton('Connect Joystick');
-        button.parent("p5Joystick");
-        button.addClass("connectButton");
-        button.mousePressed(async () => {
-          button.remove();
-          const device = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x068e }] })
-          setUpDevice(device[0], app)
-        });
-      } else {
-        setUpDevice(device, app)
-      }
     },
-    renderJoystickMoveArea(p5) {
-      p5.push()
-      p5.smooth()
-      p5.noStroke()
-      p5.fill(this.enabled ? this.enabledColor : this.disabledColor)
-      p5.circle(p5.width / 2, p5.height / 2, p5.width)
-      p5.pop()
-    },
-    renderJoystickMovement(p5) {
+    setUpDevice(device) {
       if (!this.joystick) {
+        navigator.hid.addEventListener('disconnect', (event) => { this.disconnectDevice() })
+      }
+      this.joystick = device
+      if (!this.joystick.opened) {
+        this.joystick.open()
+      }
+      this.joystick.addEventListener("inputreport", (event) => this.inputReport())
+    },
+    inputReport() {
+      const { data, device, reportId } = event
+      const xRaw = data.getUint8(1)
+      const yRaw = data.getUint8(3)
+      const buttonRaw = data.getUint8(4)
+      this.joystickData = {
+        x: xRaw <= 8 ? this.scale(xRaw, 0, 8, -1, 0) : this.scale(xRaw, 8, 15, 0, 1),
+        y: yRaw <= 8 ? this.scale(yRaw, 0, 8, -1, 0) : this.scale(yRaw, 8, 15, 0, 1),
+        pressed: buttonRaw == 1,
+      }
+      if (this.prevPressed && !this.joystickData.pressed) {
+        this.enabled = !this.enabled
+      }
+      this.prevPressed = this.joystickData.pressed
+    },
+    disconnectDevice() {
+      console.log("Disconnecting from device: " + this.joystick);
+      if (this.joystick.opened) {
+        this.joystick.close();
+      }
+      this.enabled = false;
+      this.createConnectButton()
+    },
+    renderJoystickMoveArea() {
+      this.p5.push()
+      this.p5.smooth()
+      this.p5.noStroke()
+      this.p5.fill(this.enabled ? this.enabledColor : this.disabledColor)
+      this.p5.circle(this.p5.width / 2, this.p5.height / 2, this.p5.width)
+      this.p5.pop()
+    },
+    renderJoystickMovement() {
+      if (!(this.joystick && this.enabled)) {
         return
       }
-      let pos = p5.createVector(this.joystickData.x, this.joystickData.y)
+      let pos = this.p5.createVector(this.joystickData.x, this.joystickData.y)
       if (pos.mag() > 0.9) {
         pos.normalize()
         pos.mult(0.9)
       }
       const mag = pos.mag()
-      pos.x = pos.x * p5.width / 2 + p5.width / 2
-      pos.y = pos.y * p5.height / 2 + p5.height / 2
+      pos.x = pos.x * this.p5.width / 2 + this.p5.width / 2
+      pos.y = pos.y * this.p5.height / 2 + this.p5.height / 2
 
-      p5.push()
-      p5.stroke(255)
+      this.p5.push()
+      this.p5.noStroke()
+      this.p5.fill(this.pointerColor)
+
       // Center point
-      p5.ellipse(p5.width / 2, p5.height / 2, this.pointerSize, this.pointerSize);
+      this.p5.ellipse(this.p5.width / 2, this.p5.height / 2, this.pointerSize * this.objectScale, this.pointerSize * this.objectScale)
+
       // Connecting line
-      p5.strokeWeight(Math.min(10, mag * 20))
-      p5.line(p5.width / 2, p5.height / 2, pos.x, pos.y);
-      p5.pop()
+      this.p5.push()
+      this.p5.stroke(this.pointerColor)
+      this.p5.strokeWeight(Math.min(7, mag * 10) * this.objectScale * this.objectScale)
+      this.p5.line(this.p5.width / 2, this.p5.height / 2, pos.x, pos.y)
+      this.p5.pop()
 
       // Arrow point
-      p5.push()
-      p5.noStroke()
-      var angle = p5.atan2(p5.height / 2 - pos.y, p5.width / 2 - pos.x);
-      p5.translate(pos.x, pos.y);
-      p5.rotate(angle - p5.HALF_PI);
-      p5.scale(Math.min(2, mag * 3) * this.objectScale)
-      p5.triangle(-this.pointerSize * this.objectScale * 0.5, this.pointerSize * this.objectScale, this.pointerSize * this.objectScale * 0.5, this.pointerSize * this.objectScale, 0, -this.pointerSize * this.objectScale / 2); //draws the arrow point as a triangle
-      p5.pop();
+      this.p5.push()
+      const angle = this.p5.atan2(this.p5.height / 2 - pos.y, this.p5.width / 2 - pos.x)
+      this.p5.translate(pos.x, pos.y)
+      this.p5.rotate(angle - this.p5.HALF_PI)
+      this.p5.scale(Math.min(2, mag * 3) * this.objectScale)
+      this.p5.triangle(
+        -this.pointerSize * this.objectScale * 0.5,
+        this.pointerSize * this.objectScale,
+        this.pointerSize * this.objectScale * 0.5,
+        this.pointerSize * this.objectScale,
+        0,
+        -this.pointerSize * this.objectScale / 2
+      )
+      this.p5.pop()
+      this.p5.pop()
     },
     scale(number, inMin, inMax, outMin, outMax) {
-      return (number - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+      return (number - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
     }
   }
 }
@@ -143,7 +174,7 @@ export default {
 <style>
 #p5Joystick {
   position: relative;
-  border: 2px solid rgb(115, 115, 115);
+  /* border: 2px solid rgb(115, 115, 115); */
   position: relative;
 }
 
