@@ -1,8 +1,10 @@
 <template>
-  <div id="p5BoxConveyor"></div>
+  <div ref="canvas" class="p5BoxConveyor"></div>
 </template>
 
 <script>
+import P5 from 'p5'
+
 export default {
   name: 'DexBoxConveyor',
   props: {
@@ -24,6 +26,7 @@ export default {
   },
   data() {
     return {
+      p5: null,
       renderedBoxes: [],
       selectedBox: null,
       animationProgress: 0,
@@ -32,7 +35,10 @@ export default {
     }
   },
   mounted() {
-    this.generateBoxes(this)
+    this.generateBoxes()
+  },
+  unmounted() {
+    this.p5 = null
   },
   watch: {
     boxList(newBoxList) {
@@ -41,14 +47,14 @@ export default {
       }
       this.renderedBoxes = newBoxList.slice(0, this.boxCount)
       if (this.selectedBox) {
-        if (newBoxList.length >= 2 && this.selectedBox.id == newBoxList[1].id) { // If a box was added back into the front of the queue
+        if (newBoxList.length >= 2 && this.selectedBox.id === newBoxList[1].id) { // If a box was added back into the front of the queue
           if (newBoxList.length > this.boxCount) {
             this.renderedBoxes.push(newBoxList[this.boxCount])
           }
           this.animating = true
           this.animationDirection = -1
           this.animationProgress = 1
-        } else if (this.selectedBox.id != newBoxList[0].id) { // If a box was removed from the front of the queue
+        } else if (this.selectedBox.id !== newBoxList[0].id) { // If a box was removed from the front of the queue
           this.renderedBoxes.unshift(this.selectedBox)
           this.animating = true
           this.animationDirection = 1
@@ -58,54 +64,47 @@ export default {
     },
   },
   methods: {
-    generateBoxes(app) {
-      // // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const P5 = require('p5')
-      new P5((p5) => {
-        // Start
-        p5.setup = () => {
-          app.setup(p5)
-        }
-
-        // Update every frame
-        p5.draw = () => {
-          p5.orbitControl(5, 0, 0)
-          p5.scale(1, -1)
-          p5.background(app.backgroundColor)
-          app.renderGround(p5)
-          app.renderConveyor(p5)
-          if (!app.boxList) {
-            return
-          }
-          app.checkAnimationProgress()
-          app.updateAnimation(p5)
-          app.renderBoxes(p5)
-        }
-      }
-      )
+    generateBoxes() {
+      this.p5 = new P5(function (p5) {
+        p5.setup = this.setup // Start the sketch
+        p5.draw = this.draw // Update every frame
+      }.bind(this))
     },
     // Sets up canvas and camera
-    setup(p5) {
-      const canvas = p5.createCanvas(this.canvasSize.x, this.canvasSize.y, p5.WEBGL);
-      canvas.parent("p5BoxConveyor")
-      p5.camera(0, -200, 300)
-      p5.angleMode(p5.DEGREES)
+    setup() {
+      const canvas = this.p5.createCanvas(this.canvasSize.x, this.canvasSize.y, this.p5.WEBGL);
+      canvas.parent(this.$refs.canvas)
+      this.p5.camera(0, -200, 300)
+      this.p5.angleMode(this.p5.DEGREES)
     },
-    renderGround(p5) {
-      p5.push()
-      p5.fill(this.groundColor)
-      p5.scale(this.groundSize.x, this.groundSize.y, this.groundSize.z)
-      p5.box(this.objectScale)
-      p5.pop()
+    draw() {
+      this.p5.orbitControl(5, 0, 0)
+      this.p5.scale(1, -1)
+      this.p5.background(this.backgroundColor)
+      this.renderGround()
+      this.renderConveyor()
+      if (!this.boxList) {
+        return
+      }
+      this.checkAnimationProgress()
+      this.updateAnimation()
+      this.renderBoxes()
     },
-    renderConveyor(p5) {
-      p5.push()
-      p5.fill(this.conveyorColor)
-      p5.strokeWeight(0.5)
-      p5.translate(0, this.conveyorSize.y * this.objectScale / 2, 0)
-      p5.scale(this.conveyorSize.x, this.conveyorSize.y, this.conveyorSize.z)
-      p5.box(this.objectScale)
-      p5.pop()
+    renderGround() {
+      this.p5.push()
+      this.p5.fill(this.groundColor)
+      this.p5.scale(this.groundSize.x, this.groundSize.y, this.groundSize.z)
+      this.p5.box(this.objectScale)
+      this.p5.pop()
+    },
+    renderConveyor() {
+      this.p5.push()
+      this.p5.fill(this.conveyorColor)
+      this.p5.strokeWeight(0.5)
+      this.p5.translate(0, this.conveyorSize.y * this.objectScale / 2, 0)
+      this.p5.scale(this.conveyorSize.x, this.conveyorSize.y, this.conveyorSize.z)
+      this.p5.box(this.objectScale)
+      this.p5.pop()
     },
     // Handles animation logic & display of boxes
     checkAnimationProgress() {
@@ -122,28 +121,28 @@ export default {
         this.animating = false;
       }
     },
-    updateAnimation(p5) {
+    updateAnimation() {
       if (this.animating) {
-        this.animationProgress = this.animationProgress + this.animationSpeed * this.animationDirection * p5.deltaTime / 1000
+        this.animationProgress = this.animationProgress + this.animationSpeed * this.animationDirection * this.p5.deltaTime / 1000
       }
     },
     // Displays boxes that are in the queue
-    renderBoxes(p5) {
+    renderBoxes() {
       for (let [i, box] of this.renderedBoxes.entries()) {
-        p5.push()
-        let fillColor = p5.color(this.boxColor)
+        this.p5.push()
+        let fillColor = this.p5.color(this.boxColor)
         // Selected boxes are rendered in a different color
-        if (box == this.selectedBox) {
+        if (box === this.selectedBox) {
           fillColor = this.selectedBoxError ? this.selectedBoxErrorColor : this.selectedBoxColor
         }
         // Boxes in the front/back of queue have opacity animations
-        if (i == 0 || i == this.boxCount) {
+        if (i === 0 || i === this.boxCount) {
           let amt = this.smooth(this.animationProgress)
-          amt = i == 0 ? 1 - amt : amt
-          let boxColorOpacity = p5.color(fillColor)
+          amt = i === 0 ? 1 - amt : amt
+          let boxColorOpacity = this.p5.color(fillColor)
           boxColorOpacity.setAlpha(amt * 255)
           fillColor = boxColorOpacity
-          p5.strokeWeight(amt)
+          this.p5.strokeWeight(amt)
         }
 
         // Rendering the box
@@ -151,11 +150,11 @@ export default {
         const bounds = this.conveyorSize.x * this.objectScale * 0.8
         const xPos = bounds / (this.boxCount - 1) * order - bounds / 2
         const yPos = this.conveyorSize.y * this.objectScale + box.size.y * this.objectScale / 2
-        p5.translate(xPos, yPos, 0)
-        p5.scale(box.size.x, box.size.y, box.size.z)
-        p5.fill(fillColor)
-        p5.box(this.objectScale)
-        p5.pop()
+        this.p5.translate(xPos, yPos, 0)
+        this.p5.scale(box.size.x, box.size.y, box.size.z)
+        this.p5.fill(fillColor)
+        this.p5.box(this.objectScale)
+        this.p5.pop()
       }
     },
     // Smooth interpolation of range [0, 1] for animation purposes
@@ -168,8 +167,7 @@ export default {
 </script>
 
 <style>
-#p5BoxConveyor {
-  /* border */
+.p5BoxConveyor {
   border: 2px solid rgb(115, 115, 115);
 }
 </style>

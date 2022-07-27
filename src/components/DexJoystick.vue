@@ -52,8 +52,9 @@ export default {
     },
     // Establish a connection to the APEM controller
     createConnectButton() {
+      // Get a list of available controllers that are already connected
       navigator.hid.getDevices().then(devices => {
-        this.connectButton?.remove()
+        this.connectButton?.remove() // Remove old connection button if it exists
         if (devices.length == 0) {
           this.connectButton = this.p5.createButton(this.connectMessage)
           // font size
@@ -61,21 +62,24 @@ export default {
           this.connectButton.parent("p5Joystick")
           this.connectButton.addClass("connectButton")
           this.connectButton.mousePressed(() => {
+            // Get a list of available controllers that are not already connected
+            // Vendor id queries only the APEM controller
             navigator.hid.requestDevice({ filters: [{ vendorId: 0x068e }] }).then(devices => {
               if (devices.length == 0) {
                 console.log("No device found")
-                return;
+                return
               }
               this.setUpDevice(devices[0])
               this.connectButton.remove()
             })
-          });
+          })
         } else {
           this.setUpDevice(devices[0])
         }
       })
     },
     setUpDevice(device) {
+      // Make sure to only establish the disconnection callback once
       if (!this.joystick) {
         navigator.hid.addEventListener('disconnect', (event) => { this.disconnectDevice() })
       }
@@ -96,6 +100,7 @@ export default {
 
       this.joystickData = {
         // Resting state for both x and y raw is at position 8
+        // Since the controller's resting state is offset by 1, there needs to be two separate remaps
         x: xRaw <= 8 ? this.scale(xRaw, 0, 8, -1, 0) : this.scale(xRaw, 8, 15, 0, 1), // Rescale values to [-1, 1] range
         y: yRaw <= 8 ? this.scale(yRaw, 0, 8, -1, 0) : this.scale(yRaw, 8, 15, 0, 1), // Rescale values to [-1, 1] range
         pressed: buttonRaw == 1,
@@ -107,13 +112,13 @@ export default {
       }
       this.prevPressed = this.joystickData.pressed
     },
-    // On device disconnection, close stream prompt user to reconnect
+    // On device disconnection, close stream and prompt user to reconnect
     disconnectDevice() {
-      console.log("Disconnecting from device: " + this.joystick);
+      console.log("Disconnecting from device: " + this.joystick)
       if (this.joystick.opened) {
-        this.joystick.close();
+        this.joystick.close()
       }
-      this.enabled = false;
+      this.enabled = false
       this.createConnectButton()
     },
     // p5.js callback, runs every frame

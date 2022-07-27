@@ -1,9 +1,9 @@
 <template>
   <div id="main">
     <h2>Vue</h2>
-    <!-- <DexBoxConveyor :boxList="boxList" :boxCount="3" />
-    <DexBoxVisualizer :boxList="boxList" /> -->
-    <DexJoystick />
+    <DexBoxConveyor :boxList="boxList" :boxCount="3" />
+    <DexBoxVisualizer :boxList="boxList" />
+    <!-- <DexJoystick /> -->
   </div>
 </template>
 
@@ -15,9 +15,9 @@ import DexJoystick from './components/DexJoystick.vue';
 export default {
   name: 'App',
   components: {
-    // DexBoxVisualizer,
-    // DexBoxConveyor,
-    DexJoystick
+    DexBoxVisualizer,
+    DexBoxConveyor,
+    // DexJoystick
   },
   data: () => ({
     mockBoxList:
